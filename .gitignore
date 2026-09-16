@@ -1,0 +1,14 @@
+# environnement python
+.venv/
+__pycache__/
+*.pyc
+
+# secret / config locale
+.env
+
+# editeur / os
+.vscode/
+.DS_Store
+
+# Notes perso
+commande.md
