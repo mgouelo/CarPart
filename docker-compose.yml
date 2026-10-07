@@ -1,0 +1,75 @@
+services:
+  mongo:
+    build:
+      context: ./stock-api
+      dockerfile: Dockerfile.mongo
+    container_name: carpart-mongo
+    ports:
+      - "27017:27017"
+    networks:
+      - carpart-net
+    volumes:
+      - mongo-data:/data/db
+
+  mysql:
+    image: mysql:8
+    container_name: carpart-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "3307:3306"
+    networks:
+      - carpart-net
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  stock-api:
+    build:
+      context: ./stock-api
+      dockerfile: Dockerfile
+    container_name: carpart-stock-api
+    environment:
+      MONGO_URI: mongodb://mongo:27017
+      MONGO_DB: ${MONGO_DB}
+    ports:
+      - "8000:8000"
+    depends_on:
+      - mongo
+    networks:
+      - carpart-net
+
+  clients-api:
+    build:
+      context: ./clients-api
+      dockerfile: Dockerfile
+    container_name: carpart-clients-api
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+    ports:
+      - "8001:8000"
+    restart: on-failure
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - carpart-net
+
+networks:
+  carpart-net:
+    driver: bridge
+
+volumes:
+  mongo-data:
+  mysql-data:

@@ -1,0 +1,5 @@
+fastapi[standard]
+sqlalchemy
+pymysql
+pydantic[email]
+python-dotenv
